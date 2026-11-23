@@ -151,5 +151,7 @@ jobs:
       - name: Link check
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --offline --no-progress 'artifacts/docs/**/*.html'
+          # 404.html uses root-relative links by design (it is served at any depth), which offline checking cannot resolve.
+          # The directory is passed instead of a glob so --exclude-path applies.
+          args: --offline --no-progress --exclude-path '404\.html$' artifacts/docs
           fail: true
