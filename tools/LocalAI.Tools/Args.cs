@@ -51,9 +51,14 @@ internal sealed class Args
     {
         if (source.StartsWith("env:", StringComparison.Ordinal))
         {
-            return Environment.GetEnvironmentVariable(source[4..])?.Trim() ?? throw new ToolException($"Environment variable {source[4..]} is not set.");
+            // Unset GitHub secrets arrive as empty environment variables, not missing ones.
+            string? value = Environment.GetEnvironmentVariable(source[4..])?.Trim();
+            return string.IsNullOrEmpty(value)
+                ? throw new ToolException($"Environment variable {source[4..]} is empty or not set. In GitHub Actions, check that the secret exists in the job's environment.")
+                : value;
         }
 
-        return File.ReadAllText(source).Trim();
+        string text = File.Exists(source) ? File.ReadAllText(source).Trim() : throw new ToolException($"{source} does not exist.");
+        return text.Length > 0 ? text : throw new ToolException($"{source} is empty.");
     }
 }

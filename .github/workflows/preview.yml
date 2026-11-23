@@ -36,6 +36,14 @@ jobs:
       CATALOG_SIGNING_CERT: ${{ secrets.CATALOG_SIGNING_CERT }}
     steps:
       - uses: actions/checkout@v4
+      - name: Check signing secrets
+        run: |
+          missing=""
+          for v in RUNTIME_SIGNING_KEY RUNTIME_SIGNING_CERT CATALOG_SIGNING_KEY CATALOG_SIGNING_CERT; do [ -n "${!v}" ] || missing="$missing $v"; done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing or empty secrets in the 'preview-signing' environment:$missing. See docs/maintainers/keys.md."
+            exit 1
+          fi
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
