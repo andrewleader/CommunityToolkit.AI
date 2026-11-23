@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Wire protocol, trust and shared runtime code. Client packages link the files they need (so they stay dependency-free);
+    the broker, host, tools and tests reference this project.
+  -->
+  <PropertyGroup>
+    <TargetFramework>$(RuntimeTargetFramework)</TargetFramework>
+    <AssemblyName>CommunityToolkit.AI.Protocol</AssemblyName>
+    <RootNamespace>CommunityToolkit.AI.Protocol</RootNamespace>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="broker" />
+    <InternalsVisibleTo Include="host" />
+    <InternalsVisibleTo Include="localai-tools" />
+    <InternalsVisibleTo Include="CommunityToolkit.AI.Protocol.Tests" />
+    <InternalsVisibleTo Include="CommunityToolkit.AI.Runtime.Tests" />
+  </ItemGroup>
+
+</Project>

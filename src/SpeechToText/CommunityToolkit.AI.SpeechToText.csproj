@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(ClientTargetFramework)</TargetFramework>
+    <AssemblyName>CommunityToolkit.AI.SpeechToText</AssemblyName>
+    <RootNamespace>CommunityToolkit.AI.SpeechToText</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>CommunityToolkit.AI.SpeechToText</PackageId>
+    <Description>Local speech-to-text for Windows apps. Inference runs out-of-process in the shared CommunityToolkit.AI runtime.</Description>
+    <PackageTags>ai;local;speech;transcription;whisper;windows</PackageTags>
+    <MinVerTagPrefix>stt-v</MinVerTagPrefix>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ProtocolDir)SpeechToText\**\*.cs" LinkBase="Protocol\SpeechToText" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\CommunityToolkit.AI.Core.csproj" />
+    <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

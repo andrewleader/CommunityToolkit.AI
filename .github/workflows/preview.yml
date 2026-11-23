@@ -1,0 +1,90 @@
+name: Preview (main)
+
+# Every merge to main publishes the preview channel to the Pages root: docs, the NuGet feed (-preview.<run> versions,
+# with every older version carried forward), the signed runtime manifest and the signed catalog.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      prerelease-label: preview.${{ github.run_number }}
+      runtime-version: 0.1.${{ github.run_number }}
+
+  publish:
+    needs: ci
+    runs-on: ubuntu-latest
+    # Holds the runtime and catalog signing keys (certified by the offline root). No reviewers: main is already reviewed.
+    environment: preview-signing
+    permissions:
+      contents: write
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    env:
+      PAGES_ROOT: https://andrewleader.github.io/CommunityToolkit.AI/
+      RUNTIME_VERSION: 0.1.${{ github.run_number }}
+      RUNTIME_SIGNING_KEY: ${{ secrets.RUNTIME_SIGNING_KEY }}
+      RUNTIME_SIGNING_CERT: ${{ secrets.RUNTIME_SIGNING_CERT }}
+      CATALOG_SIGNING_KEY: ${{ secrets.CATALOG_SIGNING_KEY }}
+      CATALOG_SIGNING_CERT: ${{ secrets.CATALOG_SIGNING_CERT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - run: dotnet build tools/LocalAI.Tools -c Release
+
+      - name: Assemble site
+        run: |
+          set -euo pipefail
+          tools() { dotnet run --project tools/LocalAI.Tools -c Release --no-build -- "$@"; }
+          site=site
+          mkdir -p "$site/runtime/$RUNTIME_VERSION" "$site/runtime/preview" "$site/catalog"
+          cp artifacts/runtime-win-x64/*.zip artifacts/runtime-win-arm64/*.zip "$site/runtime/$RUNTIME_VERSION/"
+
+          tools release-manifest --channel preview --version "$RUNTIME_VERSION" \
+            --runtime-zip "$site/runtime/$RUNTIME_VERSION/runtime-win-x64.zip" --runtime-zip "$site/runtime/$RUNTIME_VERSION/runtime-win-arm64.zip" \
+            --zip-base-url "../$RUNTIME_VERSION/" --expires-days 30 --out "$RUNNER_TEMP/release.json"
+          tools sign --purpose runtime --in "$RUNNER_TEMP/release.json" --key env:RUNTIME_SIGNING_KEY --cert env:RUNTIME_SIGNING_CERT --out "$site/runtime/preview/release.json"
+
+          tools catalog build --models catalog/models --expires-days 30 --out "$RUNNER_TEMP/catalog.json"
+          tools sign --purpose catalog --in "$RUNNER_TEMP/catalog.json" --key env:CATALOG_SIGNING_KEY --cert env:CATALOG_SIGNING_CERT --out "$site/catalog/catalog.json"
+
+          mkdir -p "$RUNNER_TEMP/packages"
+          cp artifacts/packages/*.nupkg "$RUNNER_TEMP/packages/"
+          tools feed build --packages "$RUNNER_TEMP/packages" --base-url "${PAGES_ROOT}nuget/v3/" --previous-base-url "${PAGES_ROOT}nuget/v3/" --out "$site/nuget/v3"
+
+          pip install -r docs/requirements.txt
+          tools catalog docs --models catalog/models --out docs/catalog.md
+          SITE_URL="$PAGES_ROOT" mkdocs build --site-dir "$RUNNER_TEMP/docs"
+          cp -a "$RUNNER_TEMP/docs/." "$site/"
+
+      - name: Deploy
+        uses: ./.github/actions/pages-deploy
+        with:
+          source: site
+          remove: |
+            nuget
+            catalog
+            assets
+            search
+          prune-runtimes: 'true'
+          message: Preview ${{ env.RUNTIME_VERSION }} from ${{ github.sha }}
+
+      - name: Verify the live site
+        run: |
+          sleep 60
+          dotnet run --project tools/LocalAI.Tools -c Release --no-build -- verify-site --root "$PAGES_ROOT" --channel preview || echo "::warning::Pages may still be serving cached files."

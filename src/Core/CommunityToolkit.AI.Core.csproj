@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(ClientTargetFramework)</TargetFramework>
+    <AssemblyName>CommunityToolkit.AI.Core</AssemblyName>
+    <RootNamespace>CommunityToolkit.AI</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>CommunityToolkit.AI.Core</PackageId>
+    <Description>Core of the CommunityToolkit.AI local model runtime: transport, bootstrapper, the Model base class, status, progress and errors. Task packages (Chat, Ocr, SpeechToText) build on it.</Description>
+    <PackageTags>ai;local;onnx;windows;llm</PackageTags>
+    <MinVerTagPrefix>core-v</MinVerTagPrefix>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ProtocolDir)Core\**\*.cs" LinkBase="Protocol\Core" />
+    <Compile Include="$(ProtocolDir)Trust\**\*.cs" LinkBase="Protocol\Trust" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

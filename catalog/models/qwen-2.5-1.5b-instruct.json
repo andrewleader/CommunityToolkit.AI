@@ -1,0 +1,107 @@
+{
+  "id": "qwen-2.5-1.5b-instruct",
+  "task": "chat",
+  "version": "1.0.0",
+  "displayName": "Qwen2.5 1.5B Instruct (int4, CPU)",
+  "description": "Qwen2.5-1.5B-Instruct converted to int4 ONNX for ONNX Runtime GenAI with Olive.",
+  "license": {
+    "id": "Apache-2.0",
+    "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/blob/main/LICENSE",
+    "requiresAcceptance": true
+  },
+  "hardware": {
+    "minMemoryMB": 4096,
+    "eps": [
+      "cpu"
+    ]
+  },
+  "adapter": {
+    "id": "ort-genai-chat",
+    "parameters": {
+      "maxLength": "4096"
+    }
+  },
+  "hfRepo": "khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx",
+  "hfRevision": "39df7b3ef27066ddea50f60284a77ebc17858b1c",
+  "files": [
+    {
+      "path": "added_tokens.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/added_tokens.json",
+      "size": 605,
+      "sha256": "58b54bbe36fc752f79a24a271ef66a0a0830054b4dfad94bde757d851968060b"
+    },
+    {
+      "path": "chat_template.jinja",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/chat_template.jinja",
+      "size": 2507,
+      "sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
+    },
+    {
+      "path": "config.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/config.json",
+      "size": 1573,
+      "sha256": "46633949dcaea3477904febe97a84ffe60adfd9cb2abe3b287da62da2570bdbf"
+    },
+    {
+      "path": "genai_config.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/genai_config.json",
+      "size": 1519,
+      "sha256": "d8e0b9cd680e9a665a06087342d96649b7012c4a9b18a788d945c74b793c47ae"
+    },
+    {
+      "path": "generation_config.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/generation_config.json",
+      "size": 276,
+      "sha256": "43df771ebccd3e4fffac2f05d0e17ef04f14bf7d8c3cf9cc39bfe0c64b6cf26c"
+    },
+    {
+      "path": "merges.txt",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/merges.txt",
+      "size": 1671853,
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+    },
+    {
+      "path": "model.onnx",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/model.onnx",
+      "size": 223810,
+      "sha256": "446ced1e1df5b9effa9502077e840a7a602cf0f61340732615a0b9519591f12c"
+    },
+    {
+      "path": "model.onnx.data",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/model.onnx.data",
+      "size": 1005289472,
+      "sha256": "196c26aece65aa75f7017d9ddc68a544b4cfc6d397fda9c49c8c5810be6f8bd2"
+    },
+    {
+      "path": "model_config.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/model_config.json",
+      "size": 5492,
+      "sha256": "c98eecd0c56a78a44f1f45c21d415b8fbe08c83b91f6e8df7fb7a163c8f48318"
+    },
+    {
+      "path": "special_tokens_map.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/special_tokens_map.json",
+      "size": 613,
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd"
+    },
+    {
+      "path": "tokenizer.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/tokenizer.json",
+      "size": 11421896,
+      "sha256": "9c5ae00e602b8860cbd784ba82a8aa14e8feecec692e7076590d014d7b7fdafa"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/tokenizer_config.json",
+      "size": 4685,
+      "sha256": "60bf17d6543b028dbd97ac7f4847418c96502006b80b4b1c57427c241c818224"
+    },
+    {
+      "path": "vocab.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/vocab.json",
+      "size": 2776833,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    }
+  ],
+  "hidden": false
+}

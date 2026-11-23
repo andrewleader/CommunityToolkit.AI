@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(ClientTargetFramework)</TargetFramework>
+    <AssemblyName>CommunityToolkit.AI.Ocr</AssemblyName>
+    <RootNamespace>CommunityToolkit.AI.Ocr</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>CommunityToolkit.AI.Ocr</PackageId>
+    <Description>Local OCR (image to text and boxes) for Windows apps. Inference runs out-of-process in the shared CommunityToolkit.AI runtime.</Description>
+    <PackageTags>ai;local;ocr;windows</PackageTags>
+    <MinVerTagPrefix>ocr-v</MinVerTagPrefix>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ProtocolDir)Ocr\**\*.cs" LinkBase="Protocol\Ocr" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\CommunityToolkit.AI.Core.csproj" />
+    <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

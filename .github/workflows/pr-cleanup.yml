@@ -1,0 +1,23 @@
+name: PR cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  remove-staging:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pages-deploy
+        with:
+          remove: pr/${{ github.event.number }}
+          message: Remove staging for PR ${{ github.event.number }}

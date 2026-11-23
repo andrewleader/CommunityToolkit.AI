@@ -1,0 +1,196 @@
+name: PR
+
+# Every PR: build + test (ci.yml). Same-repo PRs are also staged to https://<pages>/pr/<number>/ with an ephemeral
+# staging key: docs, a NuGet feed with the PR's affected packages, a runtime manifest (channel pr-<number>) and a catalog
+# that overlays production with the PR's entries. A smoke test then runs the sample against the staged bits.
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number to (re)stage
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.number || inputs.pr }}
+  cancel-in-progress: true
+
+env:
+  PR: ${{ github.event.number || inputs.pr }}
+  PAGES_ROOT: https://andrewleader.github.io/CommunityToolkit.AI/
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      prerelease-label: pr${{ github.event.number || inputs.pr }}.${{ github.run_number }}
+      runtime-version: 0.0.0-pr${{ github.event.number || inputs.pr }}.${{ github.run_number }}
+
+  stage:
+    needs: ci
+    # Fork PRs get build, test and artifacts only: they have no secrets and cannot write to Pages.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    outputs:
+      trust-key: ${{ steps.keys.outputs.trust-key }}
+      chat-version: ${{ steps.feed.outputs.chat-version }}
+    env:
+      RUNTIME_VERSION: 0.0.0-pr${{ github.event.number || inputs.pr }}.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - run: dotnet build tools/LocalAI.Tools -c Release
+
+      - name: Ephemeral staging keys (trusted only in dev mode)
+        id: keys
+        run: |
+          dotnet run --project tools/LocalAI.Tools -c Release --no-build -- keygen --out "$RUNNER_TEMP/keys" --valid-days 30
+          echo "trust-key=$(cat "$RUNNER_TEMP/keys/root.pub")" >> "$GITHUB_OUTPUT"
+
+      - name: Runtime manifest (channel pr-${{ env.PR }})
+        run: |
+          site="staging/pr/$PR"
+          mkdir -p "$site/runtime/$RUNTIME_VERSION" "$site/runtime/pr-$PR" "$site/catalog"
+          cp artifacts/runtime-win-x64/*.zip artifacts/runtime-win-arm64/*.zip "$site/runtime/$RUNTIME_VERSION/"
+          tools() { dotnet run --project tools/LocalAI.Tools -c Release --no-build -- "$@"; }
+          tools release-manifest --channel "pr-$PR" --version "$RUNTIME_VERSION" \
+            --runtime-zip "$site/runtime/$RUNTIME_VERSION/runtime-win-x64.zip" --runtime-zip "$site/runtime/$RUNTIME_VERSION/runtime-win-arm64.zip" \
+            --zip-base-url "../$RUNTIME_VERSION/" --expires-days 30 --out "$RUNNER_TEMP/release.json"
+          tools sign --purpose runtime --in "$RUNNER_TEMP/release.json" --key "$RUNNER_TEMP/keys/runtime.key" --cert "$RUNNER_TEMP/keys/runtime.cert.json" --out "$site/runtime/pr-$PR/release.json"
+
+      - name: Catalog (production overlaid with this PR's entries)
+        run: |
+          site="staging/pr/$PR"
+          overlay=""
+          if curl -fsS -o "$RUNNER_TEMP/prod-catalog.json" "${PAGES_ROOT}catalog/catalog.json"; then overlay="--overlay $RUNNER_TEMP/prod-catalog.json"; fi
+          tools() { dotnet run --project tools/LocalAI.Tools -c Release --no-build -- "$@"; }
+          tools catalog build --models catalog/models $overlay --out "$RUNNER_TEMP/catalog.json"
+          tools sign --purpose catalog --in "$RUNNER_TEMP/catalog.json" --key "$RUNNER_TEMP/keys/catalog.key" --cert "$RUNNER_TEMP/keys/catalog.cert.json" --out "$site/catalog/catalog.json"
+
+      - name: NuGet feed (affected packages only)
+        id: feed
+        run: |
+          mkdir -p "$RUNNER_TEMP/affected"
+          IFS=',' read -ra ids <<< "${{ needs.ci.outputs.packages }}"
+          for id in "${ids[@]}"; do cp artifacts/packages/$id.[0-9]*.nupkg "$RUNNER_TEMP/affected/" 2>/dev/null || true; done
+          if ls "$RUNNER_TEMP/affected"/*.nupkg >/dev/null 2>&1; then
+            dotnet run --project tools/LocalAI.Tools -c Release --no-build -- feed build --packages "$RUNNER_TEMP/affected" \
+              --base-url "${PAGES_ROOT}pr/$PR/nuget/v3/" --out "staging/pr/$PR/nuget/v3"
+          fi
+          chat=$(ls "$RUNNER_TEMP/affected" | sed -n 's/^CommunityToolkit\.AI\.Chat\.\(.*\)\.nupkg$/\1/p' | head -n1)
+          echo "chat-version=$chat" >> "$GITHUB_OUTPUT"
+
+      - name: Docs
+        run: |
+          pip install -r docs/requirements.txt
+          dotnet run --project tools/LocalAI.Tools -c Release --no-build -- catalog docs --models catalog/models --out docs/catalog.md
+          SITE_URL="${PAGES_ROOT}pr/$PR/" mkdocs build --site-dir "$RUNNER_TEMP/docs"
+          cp -a "$RUNNER_TEMP/docs/." "staging/pr/$PR/"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staged-site
+          path: staging/pr/${{ env.PR }}
+
+      - name: Deploy pr/${{ env.PR }}
+        uses: ./.github/actions/pages-deploy
+        with:
+          source: staging/pr/${{ env.PR }}
+          target: pr/${{ env.PR }}
+          clean-target: 'true'
+          message: Stage PR ${{ env.PR }} (run ${{ github.run_number }})
+
+  smoke:
+    needs: [ci, stage]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: staged-site
+          path: staged
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: packages
+      - name: EnsureReadyAsync and a response on a clean machine (staged bits, dev mode)
+        shell: pwsh
+        env:
+          LOCALAI_DEV_TRUST_KEY: ${{ needs.stage.outputs.trust-key }}
+          LOCALAI_CHANNEL: pr-${{ env.PR }}
+          LOCALAI_HOME: ${{ runner.temp }}\localai-home
+        run: |
+          # The same bytes that were deployed, read through file:// so Pages caching cannot race the test.
+          $env:LOCALAI_DEV_ROOT_URL = ([Uri](Resolve-Path staged).Path).AbsoluteUri + '/'
+          $version = '${{ needs.stage.outputs.chat-version }}'
+          $props = @()
+          if ($version) {
+            dotnet nuget add source (Resolve-Path packages).Path -n staged-packages
+            $props = @("-p:LocalAIPackageVersion=$version")
+          }
+          $out = dotnet run --project samples/ConsoleChat -c Release @props -- test-echo --dev --yes --prompt "smoke test" | Out-String
+          Write-Host $out
+          if ($out -notmatch 'Echo: smoke test') { throw 'Smoke test failed.' }
+
+  comment:
+    needs: [ci, stage, smoke]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          TRUST_KEY: ${{ needs.stage.outputs.trust-key }}
+          PACKAGES: ${{ needs.ci.outputs.packages }}
+        with:
+          script: |
+            const pr = context.issue.number;
+            const root = `${process.env.PAGES_ROOT}pr/${pr}/`;
+            const marker = '<!-- localai-staging -->';
+            const body = `${marker}
+            ### Staging preview for #${pr}
+
+            | | |
+            |---|---|
+            | Docs | ${root} |
+            | NuGet source | \`dotnet nuget add source ${root}nuget/v3/index.json -n LocalAI-PR${pr}\` |
+            | Packages | ${process.env.PACKAGES || '(none affected)'} — version \`*-pr${pr}.${context.runNumber}\` |
+            | Runtime manifest | ${root}runtime/pr-${pr}/release.json |
+            | Catalog | ${root}catalog/catalog.json |
+
+            Try it in dev mode (\`LocalAIRuntime.EnableDevMode = true\`):
+            \`\`\`powershell
+            $env:LOCALAI_DEV_ROOT_URL  = '${root}'
+            $env:LOCALAI_DEV_TRUST_KEY = '${process.env.TRUST_KEY}'
+            $env:LOCALAI_CHANNEL       = 'pr-${pr}'
+            \`\`\`
+            Pages caches for about 10 minutes, so new files can take a few minutes to appear.`;
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: pr });
+            const existing = comments.find(c => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: pr, body });
+            }

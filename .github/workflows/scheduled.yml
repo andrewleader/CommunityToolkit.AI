@@ -1,0 +1,145 @@
+name: Scheduled checks
+
+on:
+  schedule:
+    - cron: '17 5 * * *'   # daily
+  workflow_dispatch:
+    inputs:
+      full-hash:
+        description: Download and hash every catalog file
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  PAGES_ROOT: https://andrewleader.github.io/CommunityToolkit.AI/
+
+jobs:
+  verify-live-site:
+    runs-on: windows-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Manifests verify, hashes match, catalog verifies
+        id: verify
+        shell: pwsh
+        run: |
+          $failed = @()
+          foreach ($channel in 'preview', 'stable') {
+            $out = dotnet run --project tools/LocalAI.Tools -c Release -- verify-site --root $env:PAGES_ROOT --channel $channel --download 2>&1 | Out-String
+            Write-Host $out
+            if ($LASTEXITCODE -ne 0 -and $out -notmatch 'was not found') { $failed += $channel }
+            if ($out -match 'WARN') { $failed += "$channel (expires soon)" }
+          }
+          "failed=$($failed -join ', ')" >> $env:GITHUB_OUTPUT
+      - name: Open an issue
+        if: steps.verify.outputs.failed != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          title="Live site check failed: ${{ steps.verify.outputs.failed }}"
+          gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' | grep -q . || \
+            gh issue create --title "$title" --body "See ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  catalog-reachability:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Every catalog URL is still public, ungated and unchanged
+        id: check
+        run: |
+          full=""
+          if [ "${{ inputs.full-hash }}" = "true" ] || [ "$(date +%u)" = "7" ]; then full="--full-hash"; fi
+          dotnet run --project tools/LocalAI.Tools -- catalog check --models catalog/models --reachability $full | tee "$RUNNER_TEMP/check.txt"
+      - name: Open an issue when a file or repo moved
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Catalog model files unreachable or changed"
+          gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' | grep -q . || \
+            gh issue create --title "$title" --body "$(grep FAIL "$RUNNER_TEMP/check.txt" || true)
+
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  refresh-preview-signatures:
+    # Manifests and the catalog expire (anti-freeze), so re-issue them daily even without merges.
+    runs-on: ubuntu-latest
+    environment: preview-signing
+    permissions:
+      contents: write
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    env:
+      RUNTIME_SIGNING_KEY: ${{ secrets.RUNTIME_SIGNING_KEY }}
+      RUNTIME_SIGNING_CERT: ${{ secrets.RUNTIME_SIGNING_CERT }}
+      CATALOG_SIGNING_KEY: ${{ secrets.CATALOG_SIGNING_KEY }}
+      CATALOG_SIGNING_CERT: ${{ secrets.CATALOG_SIGNING_CERT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build tools/LocalAI.Tools -c Release
+      - name: Re-sign
+        run: |
+          set -euo pipefail
+          tools() { dotnet run --project tools/LocalAI.Tools -c Release --no-build -- "$@"; }
+          mkdir -p site/runtime/preview site/catalog
+          if curl -fsS -o /dev/null "${PAGES_ROOT}runtime/preview/release.json"; then
+            tools promote --from "${PAGES_ROOT}runtime/preview/release.json" --channel preview --expires-days 30 --out "$RUNNER_TEMP/release.json"
+            tools sign --purpose runtime --in "$RUNNER_TEMP/release.json" --key env:RUNTIME_SIGNING_KEY --cert env:RUNTIME_SIGNING_CERT --out site/runtime/preview/release.json
+          fi
+          tools catalog build --models catalog/models --expires-days 30 --out "$RUNNER_TEMP/catalog.json"
+          tools sign --purpose catalog --in "$RUNNER_TEMP/catalog.json" --key env:CATALOG_SIGNING_KEY --cert env:CATALOG_SIGNING_CERT --out site/catalog/catalog.json
+      - uses: ./.github/actions/pages-deploy
+        with:
+          source: site
+          message: Refresh preview signatures
+
+  stale-pr-staging:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MAX_STAGED: '20'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find staging folders for closed PRs, and the oldest beyond the cap
+        id: stale
+        run: |
+          set -euo pipefail
+          git fetch --depth 1 origin gh-pages || { echo "remove=" >> "$GITHUB_OUTPUT"; exit 0; }
+          staged=$(git ls-tree -d --name-only origin/gh-pages pr/ | sed 's|pr/||' | sort -n)
+          remove=""
+          open=()
+          for n in $staged; do
+            state=$(gh pr view "$n" --json state --jq .state 2>/dev/null || echo CLOSED)
+            if [ "$state" = "OPEN" ]; then open+=("$n"); else remove="$remove pr/$n"; fi
+          done
+          excess=$(( ${#open[@]} - MAX_STAGED ))
+          for ((i=0; i<excess; i++)); do remove="$remove pr/${open[$i]}"; done
+          { echo "remove<<EOF"; echo "$remove" | tr ' ' '\n' | sed '/^$/d'; echo "EOF"; } >> "$GITHUB_OUTPUT"
+      - if: steps.stale.outputs.remove != ''
+        uses: ./.github/actions/pages-deploy
+        with:
+          remove: ${{ steps.stale.outputs.remove }}
+          message: Remove stale PR staging folders

@@ -1,0 +1,49 @@
+site_name: CommunityToolkit.AI — Local AI for Windows apps
+site_url: !ENV [SITE_URL, 'https://andrewleader.github.io/CommunityToolkit.AI/']
+repo_url: https://github.com/andrewleader/CommunityToolkit.AI
+edit_uri: edit/main/docs/
+docs_dir: docs
+exclude_docs: |
+  requirements.txt
+
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.sections
+    - search.suggest
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ['.']
+      check_paths: true
+
+nav:
+  - Home: index.md
+  - Quick start:
+      - Console app (unpackaged): quickstart-console.md
+      - WinUI app (packaged): quickstart-winui.md
+  - Guides:
+      - Chat: guides/chat.md
+      - OCR: guides/ocr.md
+      - Speech to text: guides/speech-to-text.md
+      - How EnsureReadyAsync works: ensure-ready.md
+  - Model catalog: catalog.md
+  - Preview NuGet feed: nuget-feed.md
+  - Enterprise settings: enterprise.md
+  - Troubleshooting and errors: troubleshooting.md
+  - Uninstall: uninstall.md
+  - Privacy and telemetry: privacy.md
+  - Architecture: architecture.md
+  - Release notes: release-notes.md
+  - Maintainers:
+      - Local development: maintainers/local-dev.md
+      - Keys and signing: maintainers/keys.md
+      - Adding a model: maintainers/catalog.md
+      - CI, staging and releases: maintainers/releasing.md

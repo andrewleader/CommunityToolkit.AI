@@ -1,0 +1,33 @@
+{
+  "id": "test-echo",
+  "task": "chat",
+  "version": "1.0.0",
+  "displayName": "Test echo model",
+  "description": "Tiny smoke-test model: replies with an echo. Hidden; resolves only in dev mode.",
+  "license": {
+    "id": "Apache-2.0",
+    "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/blob/main/LICENSE",
+    "requiresAcceptance": false
+  },
+  "hardware": {
+    "minMemoryMB": 0,
+    "eps": [
+      "cpu"
+    ]
+  },
+  "adapter": {
+    "id": "test-echo",
+    "parameters": {}
+  },
+  "hfRepo": "khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx",
+  "hfRevision": "39df7b3ef27066ddea50f60284a77ebc17858b1c",
+  "files": [
+    {
+      "path": "generation_config.json",
+      "url": "https://huggingface.co/khanuckaeff/Qwen2.5-1.5B-Instruct-Olive-Onnx/resolve/39df7b3ef27066ddea50f60284a77ebc17858b1c/cpu_and_mobile/generation_config.json",
+      "size": 276,
+      "sha256": "43df771ebccd3e4fffac2f05d0e17ef04f14bf7d8c3cf9cc39bfe0c64b6cf26c"
+    }
+  ],
+  "hidden": true
+}

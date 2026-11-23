@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\Chat\CommunityToolkit.AI.Chat.csproj" />
+    <ProjectReference Include="..\..\src\Ocr\CommunityToolkit.AI.Ocr.csproj" />
+    <ProjectReference Include="..\..\src\Protocol\CommunityToolkit.AI.Protocol.csproj" />
+    <ProjectReference Include="..\..\tools\LocalAI.Tools\LocalAI.Tools.csproj" />
+    <!-- Built so the tests can pack them into a runtime.zip; not referenced as assemblies. -->
+    <ProjectReference Include="..\..\src\Broker\Broker.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\Host\Host.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

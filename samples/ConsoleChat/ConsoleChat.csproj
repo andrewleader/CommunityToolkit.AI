@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- An unpackaged console app. It references only the Chat package (which brings Core). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(LocalAIPackageVersion)' == ''">
+    <ProjectReference Include="..\..\src\Chat\CommunityToolkit.AI.Chat.csproj" />
+  </ItemGroup>
+
+  <!-- CI smoke tests restore the PR's package from the staging feed instead: -p:LocalAIPackageVersion=x.y.z-prN.M -->
+  <ItemGroup Condition="'$(LocalAIPackageVersion)' != ''">
+    <PackageReference Include="CommunityToolkit.AI.Chat" Version="$(LocalAIPackageVersion)" />
+  </ItemGroup>
+
+</Project>

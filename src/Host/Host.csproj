@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(RuntimeTargetFramework)</TargetFramework>
+    <AssemblyName>host</AssemblyName>
+    <RootNamespace>CommunityToolkit.AI.Host</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationManifest>..\Broker\app.manifest</ApplicationManifest>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+<ItemGroup>
+    <ProjectReference Include="..\Protocol\CommunityToolkit.AI.Protocol.csproj" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.20.0" />
+  </ItemGroup>
+
+</Project>
+

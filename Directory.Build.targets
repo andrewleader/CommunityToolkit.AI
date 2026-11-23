@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Task packages depend on Core with the range [x.y.z, 2.0.0) so any Core 1.x satisfies them (spec 4.1).
+    NuGet only emits a lower bound for project references, so rewrite the version before pack reads it.
+  -->
+  <Target Name="ApplyCoreDependencyRange" AfterTargets="_GetProjectReferenceVersions" Condition="'$(IsPackable)' == 'true'">
+    <ItemGroup>
+      <_CoreReferenceWithVersion Include="@(_ProjectReferencesWithVersions)" Condition="'%(Filename)' == 'CommunityToolkit.AI.Core'" />
+      <_ProjectReferencesWithVersions Remove="@(_CoreReferenceWithVersion)" />
+      <_ProjectReferencesWithVersions Include="@(_CoreReferenceWithVersion)" ProjectVersion="[%(_CoreReferenceWithVersion.ProjectVersion), 2.0.0)" />
+    </ItemGroup>
+  </Target>
+</Project>

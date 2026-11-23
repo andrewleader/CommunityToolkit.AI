@@ -1,0 +1,80 @@
+name: Deploy to gh-pages
+description: >
+  Copies a directory into the gh-pages branch (optionally under a sub-path), removes paths, prunes old runtime
+  versions, and force-pushes the result as a single orphan commit so binary history never accumulates.
+inputs:
+  source:
+    description: Directory whose contents are copied in. Empty to only remove.
+    default: ''
+  target:
+    description: Sub-path in the site (for example pr/42). Empty for the root.
+    default: ''
+  clean-target:
+    description: Delete the target sub-path before copying.
+    default: 'false'
+  remove:
+    description: Newline-separated site paths to delete.
+    default: ''
+  prune-runtimes:
+    description: Keep only runtime/<version> folders referenced by a channel manifest (plus the newest 2).
+    default: 'false'
+  message:
+    description: Commit message.
+    default: Deploy site
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        SOURCE: ${{ inputs.source }}
+        TARGET: ${{ inputs.target }}
+        CLEAN_TARGET: ${{ inputs.clean-target }}
+        REMOVE: ${{ inputs.remove }}
+        PRUNE: ${{ inputs.prune-runtimes }}
+        MESSAGE: ${{ inputs.message }}
+        TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        rm -rf "$RUNNER_TEMP/pages"
+        if git clone --depth 1 --branch gh-pages "https://x-access-token:${TOKEN}@github.com/${REPO}.git" "$RUNNER_TEMP/pages" 2>/dev/null; then
+          echo "Updating existing gh-pages."
+        else
+          git init -b gh-pages "$RUNNER_TEMP/pages"
+          git -C "$RUNNER_TEMP/pages" remote add origin "https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+        fi
+        cd "$RUNNER_TEMP/pages"
+        dest="./${TARGET}"
+        if [ "$CLEAN_TARGET" = "true" ] && [ -n "$TARGET" ]; then rm -rf "$dest"; fi
+        while IFS= read -r path; do
+          [ -n "$path" ] && rm -rf "./$path"
+        done <<< "$REMOVE"
+        if [ -n "$SOURCE" ]; then
+          mkdir -p "$dest"
+          cp -a "$SOURCE"/. "$dest"/
+        fi
+        if [ "$PRUNE" = "true" ] && [ -d runtime ]; then
+          # Keep every version a channel manifest points at (payloads are base64), plus the two newest folders.
+          keep=""
+          for f in runtime/*/release.json; do
+            [ -f "$f" ] || continue
+            v=$(python3 -c "import json,base64,sys; print(json.loads(base64.b64decode(json.load(open(sys.argv[1]))['payload']))['version'])" "$f" || true)
+            keep="$keep $v"
+          done
+          newest=$(ls -1dt runtime/*/ | while read -r d; do [ -f "$d/release.json" ] || basename "$d"; done | head -n 2 | tr '\n' ' ')
+          for d in runtime/*/; do
+            name=$(basename "$d")
+            [ -f "$d/release.json" ] && continue
+            if ! echo " $keep $newest " | grep -q " $name "; then echo "Pruning runtime/$name"; rm -rf "$d"; fi
+          done
+        fi
+        touch .nojekyll
+        size=$(du -sm --exclude=.git . | cut -f1)
+        echo "Site size: ${size} MB"
+        if [ "$size" -gt 950 ]; then echo "::error::The Pages site would be ${size} MB, over the 1 GB limit."; exit 1; fi
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git checkout -q --orphan deploy-tmp
+        git add -A
+        git commit -q -m "$MESSAGE"
+        git push -q -f origin deploy-tmp:gh-pages

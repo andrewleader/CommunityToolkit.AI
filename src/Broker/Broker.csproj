@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(RuntimeTargetFramework)</TargetFramework>
+    <AssemblyName>broker</AssemblyName>
+    <RootNamespace>CommunityToolkit.AI.Broker</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Protocol\CommunityToolkit.AI.Protocol.csproj" />
+  </ItemGroup>
+
+</Project>

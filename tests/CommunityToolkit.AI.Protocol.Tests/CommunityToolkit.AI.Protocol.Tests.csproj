@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\Protocol\CommunityToolkit.AI.Protocol.csproj" />
+  </ItemGroup>
+
+</Project>

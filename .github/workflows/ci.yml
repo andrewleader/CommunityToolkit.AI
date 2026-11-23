@@ -1,0 +1,155 @@
+name: CI (reusable)
+
+# Builds and tests everything on x64 and ARM64, packs the client packages, enforces size budgets,
+# and publishes the self-contained runtime zip per architecture. Called by pr.yml and preview.yml.
+on:
+  workflow_call:
+    inputs:
+      prerelease-label:
+        description: NuGet prerelease label, for example pr42.7 or preview.123
+        type: string
+        required: true
+      runtime-version:
+        description: Runtime version, for example 0.1.123 or 0.0.0-pr42.7
+        type: string
+        required: true
+    outputs:
+      packages:
+        description: Comma-separated affected package ids (all packages on main).
+        value: ${{ jobs.build.outputs.packages }}
+      runtime-affected:
+        value: ${{ jobs.build.outputs.runtime }}
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CONFIGURATION: Release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            rid: win-x64
+          - runner: windows-11-arm
+            rid: win-arm64
+    runs-on: ${{ matrix.runner }}
+    outputs:
+      packages: ${{ steps.affected.outputs.packages }}
+      runtime: ${{ steps.affected.outputs.runtime }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # MinVer computes per-package versions from tags
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Build
+        run: dotnet build CommunityToolkit.AI.slnx -c $env:CONFIGURATION -p:MinVerDefaultPreReleaseIdentifiers=${{ inputs.prerelease-label }}
+
+      - name: Unit and protocol tests
+        run: dotnet test tests/CommunityToolkit.AI.Protocol.Tests -c $env:CONFIGURATION --no-build --logger trx --results-directory artifacts/test-results
+
+      - name: End-to-end runtime tests
+        run: dotnet test tests/CommunityToolkit.AI.Runtime.Tests -c $env:CONFIGURATION --no-build --logger trx --results-directory artifacts/test-results
+
+      - name: Affected packages
+        id: affected
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            dotnet run --project tools/LocalAI.Tools -c $env:CONFIGURATION --no-build -- affected --base origin/${{ github.base_ref }}
+          } else {
+            "packages=CommunityToolkit.AI.Chat,CommunityToolkit.AI.Core,CommunityToolkit.AI.Ocr,CommunityToolkit.AI.SpeechToText" >> $env:GITHUB_OUTPUT
+            "runtime=true" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Pack client packages
+        if: matrix.rid == 'win-x64'
+        run: |
+          foreach ($p in 'Core','Chat','SpeechToText','Ocr') {
+            dotnet pack src/$p -c $env:CONFIGURATION --no-build -o artifacts/packages -p:MinVerDefaultPreReleaseIdentifiers=${{ inputs.prerelease-label }}
+          }
+
+      - name: Package size gate (Core <= 1 MB, task packages <= 500 KB)
+        if: matrix.rid == 'win-x64'
+        run: dotnet run --project tools/LocalAI.Tools -c $env:CONFIGURATION --no-build -- size-gate --packages artifacts/packages
+
+      - name: Publish self-contained runtime
+        run: |
+          dotnet publish src/Broker -c $env:CONFIGURATION -r ${{ matrix.rid }} --self-contained -o artifacts/publish/broker
+          dotnet publish src/Host -c $env:CONFIGURATION -r ${{ matrix.rid }} --self-contained -o artifacts/publish/host
+          dotnet run --project tools/LocalAI.Tools -c $env:CONFIGURATION --no-build -- pack-runtime `
+            --broker artifacts/publish/broker --host artifacts/publish/host --version ${{ inputs.runtime-version }} `
+            --rid ${{ matrix.rid }} --out artifacts/runtime/runtime-${{ matrix.rid }}.zip
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.rid == 'win-x64'
+        with:
+          name: packages
+          path: artifacts/packages/*.nupkg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime-${{ matrix.rid }}
+          path: artifacts/runtime/*.zip
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.rid }}
+          path: artifacts/test-results
+
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Check changed catalog entries
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- catalog/models | tr '\n' ',')
+          else
+            changed=""
+          fi
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ -z "$changed" ]; then echo "No catalog changes."; exit 0; fi
+          dotnet run --project tools/LocalAI.Tools -- catalog check --models catalog/models --reachability ${changed:+--changed "$changed"}
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r docs/requirements.txt
+      - name: Generate the catalog page
+        run: dotnet run --project tools/LocalAI.Tools -- catalog docs --models catalog/models --out docs/catalog.md
+      - name: Build docs (strict)
+        run: mkdocs build --strict --site-dir artifacts/docs
+      - name: Spell check
+        uses: crate-ci/typos@v1
+        with:
+          files: docs README.md
+      - name: Link check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress 'artifacts/docs/**/*.html'
+          fail: true

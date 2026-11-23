@@ -1,0 +1,61 @@
+name: Release (promote to stable)
+
+# Promotion is a manifest change: the preview manifest is re-issued for the stable channel, re-signed with the
+# release key, and published. It is instant and reversible (promote an older manifest, or set a kill switch).
+on:
+  workflow_dispatch:
+    inputs:
+      rollout:
+        description: Staged rollout percent
+        default: '100'
+      kill-switch:
+        description: Comma-separated runtime versions that must not run
+        default: ''
+      min-version:
+        description: Force installs older than this version to update
+        default: ''
+      source:
+        description: Manifest to promote
+        default: https://andrewleader.github.io/CommunityToolkit.AI/runtime/preview/release.json
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    # Protected environment with required reviewers. The release key is never available to PR workflows.
+    environment: release
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    env:
+      PAGES_ROOT: https://andrewleader.github.io/CommunityToolkit.AI/
+      RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+      RELEASE_SIGNING_CERT: ${{ secrets.RELEASE_SIGNING_CERT }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build tools/LocalAI.Tools -c Release
+      - name: Verify the source and promote it
+        id: promote
+        run: |
+          set -euo pipefail
+          tools() { dotnet run --project tools/LocalAI.Tools -c Release --no-build -- "$@"; }
+          tools verify-site --root "$PAGES_ROOT" --channel preview --download
+          args=(--from "${{ inputs.source }}" --channel stable --rollout "${{ inputs.rollout }}" --expires-days 90 --out "$RUNNER_TEMP/stable.json")
+          [ -n "${{ inputs.kill-switch }}" ] && args+=(--kill-switch "${{ inputs.kill-switch }}")
+          [ -n "${{ inputs.min-version }}" ] && args+=(--min-version "${{ inputs.min-version }}")
+          tools promote "${args[@]}"
+          mkdir -p site/runtime/stable
+          tools sign --purpose runtime --in "$RUNNER_TEMP/stable.json" --key env:RELEASE_SIGNING_KEY --cert env:RELEASE_SIGNING_CERT --out site/runtime/stable/release.json
+          echo "version=$(python3 -c "import json; print(json.load(open('$RUNNER_TEMP/stable.json'))['version'])")" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/pages-deploy
+        with:
+          source: site
+          message: Promote runtime ${{ steps.promote.outputs.version }} to stable
+      - name: Release notes from merged PRs
+        run: gh release create "runtime-v${{ steps.promote.outputs.version }}" --target "${{ github.sha }}" --generate-notes --title "Runtime ${{ steps.promote.outputs.version }}" || echo "Release already exists."
