@@ -1,0 +1,32 @@
+{
+  "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.chat/0.0.0-preview.4.4.json",
+  "catalogEntry": {
+    "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.chat/0.0.0-preview.4.4.json",
+    "id": "CommunityToolkit.AI.Chat",
+    "version": "0.0.0-preview.4.4",
+    "description": "Local chat models for Windows apps through Microsoft.Extensions.AI IChatClient. Inference runs out-of-process in the shared CommunityToolkit.AI runtime.",
+    "authors": "CommunityToolkit.AI contributors",
+    "licenseExpression": "MIT",
+    "projectUrl": "https://andrewleader.github.io/CommunityToolkit.AI/",
+    "tags": "ai local chat llm IChatClient windows",
+    "listed": true,
+    "packageContent": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/flatcontainer/communitytoolkit.ai.chat/0.0.0-preview.4.4/communitytoolkit.ai.chat.0.0.0-preview.4.4.nupkg",
+    "dependencyGroups": [
+      {
+        "targetFramework": "net8.0",
+        "dependencies": [
+          {
+            "id": "CommunityToolkit.AI.Core",
+            "range": "[0.0.0-preview.4.4, 2.0.0)"
+          },
+          {
+            "id": "Microsoft.Extensions.AI.Abstractions",
+            "range": "10.11.0"
+          }
+        ]
+      }
+    ]
+  },
+  "packageContent": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/flatcontainer/communitytoolkit.ai.chat/0.0.0-preview.4.4/communitytoolkit.ai.chat.0.0.0-preview.4.4.nupkg",
+  "registration": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.chat/index.json"
+}

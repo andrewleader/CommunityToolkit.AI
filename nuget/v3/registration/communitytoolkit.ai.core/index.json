@@ -1,0 +1,37 @@
+{
+  "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.core/index.json",
+  "count": 1,
+  "items": [
+    {
+      "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.core/index.json#page/0.0.0-preview.4.4/0.0.0-preview.4.4",
+      "count": 1,
+      "lower": "0.0.0-preview.4.4",
+      "upper": "0.0.0-preview.4.4",
+      "items": [
+        {
+          "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.core/0.0.0-preview.4.4.json",
+          "catalogEntry": {
+            "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.core/0.0.0-preview.4.4.json",
+            "id": "CommunityToolkit.AI.Core",
+            "version": "0.0.0-preview.4.4",
+            "description": "Core of the CommunityToolkit.AI local model runtime: transport, bootstrapper, the Model base class, status, progress and errors. Task packages (Chat, Ocr, SpeechToText) build on it.",
+            "authors": "CommunityToolkit.AI contributors",
+            "licenseExpression": "MIT",
+            "projectUrl": "https://andrewleader.github.io/CommunityToolkit.AI/",
+            "tags": "ai local onnx windows llm",
+            "listed": true,
+            "packageContent": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/flatcontainer/communitytoolkit.ai.core/0.0.0-preview.4.4/communitytoolkit.ai.core.0.0.0-preview.4.4.nupkg",
+            "dependencyGroups": [
+              {
+                "targetFramework": "net8.0",
+                "dependencies": []
+              }
+            ]
+          },
+          "packageContent": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/flatcontainer/communitytoolkit.ai.core/0.0.0-preview.4.4/communitytoolkit.ai.core.0.0.0-preview.4.4.nupkg",
+          "registration": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.core/index.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "version": "3.0.0",
+  "resources": [
+    {
+      "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/flatcontainer/",
+      "@type": "PackageBaseAddress/3.0.0"
+    },
+    {
+      "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/",
+      "@type": "RegistrationsBaseUrl"
+    },
+    {
+      "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/",
+      "@type": "RegistrationsBaseUrl/3.0.0-rc"
+    },
+    {
+      "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/",
+      "@type": "RegistrationsBaseUrl/3.4.0"
+    },
+    {
+      "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/",
+      "@type": "RegistrationsBaseUrl/3.6.0"
+    }
+  ]
+}

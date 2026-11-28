@@ -1,0 +1,22 @@
+{
+  "purpose": "runtime",
+  "payload": "ewogICJzY2hlbWEiOiAxLAogICJjaGFubmVsIjogInByZXZpZXciLAogICJ2ZXJzaW9uIjogIjAuMS40IiwKICAic2VxdWVuY2UiOiAxNzk1ODc1MTc2LAogICJleHBpcmVzIjogIjIwMjYtMTItMjhUMTQ6MTI6NTYuOTAxMjc5OCswMDowMCIsCiAgInJvbGxvdXRQZXJjZW50IjogMTAwLAogICJraWxsU3dpdGNoIjogW10sCiAgInJldm9rZWRLZXlzIjogW10sCiAgImRvd25sb2FkSG9zdHMiOiBbCiAgICAiaHVnZ2luZ2ZhY2UuY28iLAogICAgIiouaHVnZ2luZ2ZhY2UuY28iLAogICAgIiouaGYuY28iCiAgXSwKICAiZmlsZXMiOiBbCiAgICB7CiAgICAgICJuYW1lIjogInJ1bnRpbWUtd2luLXg2NC56aXAiLAogICAgICAidXJsIjogIi4uLzAuMS40L3J1bnRpbWUtd2luLXg2NC56aXAiLAogICAgICAic2l6ZSI6IDQ5NjkxOTMxLAogICAgICAic2hhMjU2IjogIjg4ZDNhOWQ5YWNmOWFhZDg0NjI1ZTk1YTNmOGM1MDkzMTcwNzllYjUwNTdjZTcyMWJmZmVlNTc3OGMxODc4Y2IiCiAgICB9LAogICAgewogICAgICAibmFtZSI6ICJydW50aW1lLXdpbi1hcm02NC56aXAiLAogICAgICAidXJsIjogIi4uLzAuMS40L3J1bnRpbWUtd2luLWFybTY0LnppcCIsCiAgICAgICJzaXplIjogNDc1MDMyOTcsCiAgICAgICJzaGEyNTYiOiAiOWJiMDYwMzg2Y2MzYjRhOTk5NDVmNWMxM2Q3NTNiMWIxZjI0ZDhjNjc4ZDk3YzBjZTYxZDNlODIyYjhmZGYxMiIKICAgIH0KICBdLAogICJkZXByZWNhdGVkQ29udHJhY3RzIjogW10sCiAgImNhdGFsb2dVcmwiOiAiLi4vLi4vY2F0YWxvZy9jYXRhbG9nLmpzb24iLAogICJSdW50aW1lWmlwIjogewogICAgIm5hbWUiOiAicnVudGltZS13aW4teDY0LnppcCIsCiAgICAidXJsIjogIi4uLzAuMS40L3J1bnRpbWUtd2luLXg2NC56aXAiLAogICAgInNpemUiOiA0OTY5MTkzMSwKICAgICJzaGEyNTYiOiAiODhkM2E5ZDlhY2Y5YWFkODQ2MjVlOTVhM2Y4YzUwOTMxNzA3OWViNTA1N2NlNzIxYmZmZWU1Nzc4YzE4NzhjYiIKICB9Cn0=",
+  "signatures": [
+    {
+      "keyId": "e00e5bbeb6b2d5a3",
+      "signature": "zzE9FJ918sPIW2uN8DR0tuc/n6B\u002BJfxxaQ2mjyGWODyUfLqzOT9pTDnrIODaDw0P6b\u002B56xDsGDmG93wgT2SgCQ=="
+    }
+  ],
+  "certificates": [
+    {
+      "keyId": "e00e5bbeb6b2d5a3",
+      "publicKey": "KEC68/UxAKvJgvWhubsV9wBhtxxocIf5TD6V\u002BoKdFrU=",
+      "purposes": [
+        "runtime"
+      ],
+      "notAfter": "2028-11-22T18:59:51.4516924+00:00",
+      "rootKeyId": "d0bf18b88801ad52",
+      "signature": "tDIYEmzMI4HwiAUBVxXUYlNcqM1bNdKyLsHX9cQqg\u002B\u002BKMVjOgAmeVw3wG0Cij4haDJxmLpa/bxtd/BLgH9wICQ=="
+    }
+  ]
+}

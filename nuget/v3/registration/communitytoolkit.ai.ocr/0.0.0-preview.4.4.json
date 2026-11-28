@@ -1,0 +1,28 @@
+{
+  "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.ocr/0.0.0-preview.4.4.json",
+  "catalogEntry": {
+    "@id": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.ocr/0.0.0-preview.4.4.json",
+    "id": "CommunityToolkit.AI.Ocr",
+    "version": "0.0.0-preview.4.4",
+    "description": "Local OCR (image to text and boxes) for Windows apps. Inference runs out-of-process in the shared CommunityToolkit.AI runtime.",
+    "authors": "CommunityToolkit.AI contributors",
+    "licenseExpression": "MIT",
+    "projectUrl": "https://andrewleader.github.io/CommunityToolkit.AI/",
+    "tags": "ai local ocr windows",
+    "listed": true,
+    "packageContent": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/flatcontainer/communitytoolkit.ai.ocr/0.0.0-preview.4.4/communitytoolkit.ai.ocr.0.0.0-preview.4.4.nupkg",
+    "dependencyGroups": [
+      {
+        "targetFramework": "net8.0",
+        "dependencies": [
+          {
+            "id": "CommunityToolkit.AI.Core",
+            "range": "[0.0.0-preview.4.4, 2.0.0)"
+          }
+        ]
+      }
+    ]
+  },
+  "packageContent": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/flatcontainer/communitytoolkit.ai.ocr/0.0.0-preview.4.4/communitytoolkit.ai.ocr.0.0.0-preview.4.4.nupkg",
+  "registration": "https://andrewleader.github.io/CommunityToolkit.AI/nuget/v3/registration/communitytoolkit.ai.ocr/index.json"
+}
